@@ -16,69 +16,41 @@ Longtail 是一个基于 WireGuard 的轻量级自托管组网工具，可作为
 
 - 准备服务器 IP 或域名。服务器可以是云服务器、VPS、带公网 IP 的电脑，也可以是当前本机。
 - 远程服务器需要 SSH 登录方式和 root/sudo 权限；本机服务器直接在本机执行命令。
-- 已有可用的 `/etc/wireguard/wg0.conf`，里面有服务端 `PrivateKey`。
 
 ## 让 AI 帮你配置
 
-可以把这段发给 AI：
+代操作版，把这段发给 AI：
 
 ```text
-请帮我安装并配置 Longtail：
-1. 先确认服务器 IP/域名、SSH 登录方式和 root/sudo 权限；如果服务器是本机，就直接本机执行。
-2. 配置完成后，给我手机 WireGuard 二维码，并告诉我后台地址。
-3. 说明 WireGuard 子网、服务器公网入口和开机常态运行方式。
-4. 说明如何使用后台，特别是 WireGuard 可信端口控制。
+请帮我安装并配置 Longtail；当前服务器 IP/域名是：____，SSH 登录方式是：____，sudo 密码是：____。
+配置完成后，请给我手机 WireGuard 扫码二维码和后台地址，并告诉我验证方法、手机扫码方法、进入后台方法和后续管理方法。
+```
+
+安全版，把这段发给 AI：
+
+```text
+请给我生成安装并配置 Longtail 的命令；服务器 IP/域名是：____。
+不要连接我的服务器，也不要让我提供 sudo 密码；只输出需要我复制到服务器上执行的命令，并附上验证方法、手机扫码方法、进入后台方法和后续管理方法。
 ```
 
 ## 安装
 
 ```bash
 sudo apt update
-sudo apt install -y git python3-venv wireguard-tools qrencode
+sudo apt install -y git
 
 sudo git clone https://github.com/equationofmathphysics/longtail.git /opt/longtail
 cd /opt/longtail
 
-sudo python3 -m venv .venv
-sudo .venv/bin/pip install -r requirements.txt
-
-sudo install -d -m 755 /etc/longtail
-sudo install -m 600 deploy/longtail.env.example /etc/longtail/longtail.env
-sudo nano /etc/longtail/longtail.env
+sudo ./deploy/bootstrap.sh YOUR_SERVER_IP_OR_DOMAIN:51820 phone
 ```
 
-更简单的模板在 `deploy/examples/`，例如：
+`bootstrap.sh` 会安装运行依赖、创建 Python 虚拟环境、写入 `/etc/longtail/longtail.env`、在缺失时生成 `/etc/wireguard/wg0.conf`、开启 IPv4 转发、启动 `wg-quick@wg0` 和 `longtail-web`，并创建第一个管理员设备 `phone`。命令结束时会在终端输出 WireGuard 二维码。
+
+如果只输入域名或 IP，没有写端口，会默认使用 `51820`：
 
 ```bash
-sudo install -m 600 deploy/examples/minimal.env /etc/longtail/longtail.env
-```
-
-至少修改这一行：
-
-```env
-NET_TOOLS_SERVER_ENDPOINT=YOUR_SERVER_IP_OR_DOMAIN:51820
-```
-
-最短流程：
-
-1. 复制一个 env 模板到 `/etc/longtail/longtail.env`。
-2. 修改 `NET_TOOLS_SERVER_ENDPOINT`。
-3. 启动 `longtail-web`。
-4. 用 SSH 隧道打开后台。
-5. 在后台新增设备、扫码导入 WireGuard。
-
-启动后台：
-
-```bash
-sudo cp deploy/longtail-web.service /etc/systemd/system/longtail-web.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now longtail-web
-```
-
-如果 `wg0` 还没有设置开机启动：
-
-```bash
-sudo systemctl enable --now wg-quick@wg0
+sudo ./deploy/bootstrap.sh YOUR_SERVER_IP_OR_DOMAIN
 ```
 
 查看状态：
@@ -87,9 +59,24 @@ sudo systemctl enable --now wg-quick@wg0
 sudo systemctl status longtail-web --no-pager
 ```
 
-## 使用
+## 验证和使用
 
-本机打开：
+验证服务：
+
+```bash
+sudo systemctl status wg-quick@wg0 --no-pager
+sudo systemctl status longtail-web --no-pager
+```
+
+手机扫码：
+
+1. 用 WireGuard App 扫 `bootstrap.sh` 输出的二维码。
+2. 打开手机上的 WireGuard 隧道。
+3. 访问 `http://10.66.0.1:51437/`。
+
+进入后台：
+
+服务器本机打开：
 
 ```text
 http://127.0.0.1:51437/
@@ -107,13 +94,11 @@ ssh -L 51437:127.0.0.1:51437 user@your-server
 http://127.0.0.1:51437/
 ```
 
-第一次添加手机：
+后续管理：
 
-1. 点击“新增设备”，输入 `phone`。
-2. 如果希望手机也能管理后台，在设备列表里给 `phone` 点“提权”。
-3. 用 WireGuard App 扫二维码。
-4. 手机连上 VPN 后，打开 `http://10.66.0.1:51437/`。
-5. 如果走 SSH 隧道管理，继续打开 `http://127.0.0.1:51437/`。
+1. 在后台新增设备，复制配置或扫码导入 WireGuard。
+2. 在设备列表里暂停、恢复、删除 peer。
+3. 给需要管理后台的设备开启管理员权限。
 
 端口控制：
 
@@ -143,6 +128,8 @@ NET_TOOLS_FIREWALL_ENABLED=1
 NET_TOOLS_FIREWALL_REQUIRED_INBOUND_PORTS=tcp/22,tcp/3389,udp/3389,tcp/51437
 NET_TOOLS_FIREWALL_REQUIRED_OUTBOUND_PORTS=tcp/22,tcp/3389,udp/3389,tcp/51437
 ```
+
+更完整的模板在 `deploy/longtail.env.example`，更小的场景模板在 `deploy/examples/`。通常不需要手写这些文件，先用 `deploy/bootstrap.sh` 初始化即可。
 
 ## 安全
 
