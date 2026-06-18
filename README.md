@@ -1,6 +1,6 @@
 # Longtail
 
-Longtail 是一个很小的 WireGuard Web 管理后台。
+Longtail 是一个基于 WireGuard 的轻量级自托管组网工具，可作为有公网服务器场景下的 Tailscale 简化替代。它支持局域网式互联、设备二维码接入、后台权限管理和 WireGuard 侧端口控制，适合多机器人调试、远程运维和小型私有网络。
 
 它可以：
 
