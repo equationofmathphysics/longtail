@@ -36,7 +36,10 @@ class Settings:
     client_allowed_ips: str = os.getenv("NET_TOOLS_CLIENT_ALLOWED_IPS", "10.66.0.0/24")
     state_file: Path = Path(os.getenv("NET_TOOLS_STATE_FILE", str(DATA_DIR / "state.json")))
     hidden_peers: tuple[str, ...] = _csv_env("NET_TOOLS_HIDDEN_PEERS", "")
-    admin_ips: tuple[str, ...] = _csv_env("NET_TOOLS_ADMIN_IPS", "127.0.0.1,::1")
+    admin_ips: tuple[str, ...] = _csv_env(
+        "NET_TOOLS_ADMIN_IPS",
+        f"127.0.0.1,::1,{os.getenv('NET_TOOLS_SERVER_VPN_IP', '10.66.0.1')}",
+    )
     initial_admin_peers: tuple[str, ...] = _csv_env("NET_TOOLS_INITIAL_ADMIN_PEERS", "")
     admin_token: str = os.getenv("NET_TOOLS_ADMIN_TOKEN", "")
     trust_proxy_headers: bool = _bool_env("NET_TOOLS_TRUST_PROXY_HEADERS")
@@ -44,7 +47,7 @@ class Settings:
     firewall_chain_prefix: str = os.getenv("NET_TOOLS_FIREWALL_CHAIN_PREFIX", "LONGTAIL")
     firewall_required_inbound_ports: str = os.getenv("NET_TOOLS_FIREWALL_REQUIRED_INBOUND_PORTS", DEFAULT_REQUIRED_PORTS)
     firewall_required_outbound_ports: str = os.getenv("NET_TOOLS_FIREWALL_REQUIRED_OUTBOUND_PORTS", DEFAULT_REQUIRED_PORTS)
-    bind_host: str = os.getenv("NET_TOOLS_BIND_HOST", "0.0.0.0")
+    bind_host: str = os.getenv("NET_TOOLS_BIND_HOST", os.getenv("NET_TOOLS_SERVER_VPN_IP", "10.66.0.1"))
     bind_port: int = int(DEFAULT_BIND_PORT)
     lock_file: Path = Path(os.getenv("NET_TOOLS_LOCK_FILE", "/tmp/net-tools-wg.lock"))
 

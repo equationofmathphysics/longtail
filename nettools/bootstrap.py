@@ -228,9 +228,10 @@ def main(argv: list[str] | None = None) -> int:
             "NET_TOOLS_SERVER_VPN_IP": DEFAULT_SERVER_VPN_IP,
             "NET_TOOLS_WG_PORT": str(port),
             "NET_TOOLS_CLIENT_ALLOWED_IPS": DEFAULT_WG_CIDR,
-            "NET_TOOLS_ADMIN_IPS": "127.0.0.1,::1",
+            "NET_TOOLS_ADMIN_IPS": f"127.0.0.1,::1,{DEFAULT_SERVER_VPN_IP}",
             "NET_TOOLS_INITIAL_ADMIN_PEERS": args.admin_name,
             "NET_TOOLS_FIREWALL_ENABLED": "1",
+            "NET_TOOLS_BIND_HOST": DEFAULT_SERVER_VPN_IP,
         }
 
         update_env(ENV_PATH, env_values)

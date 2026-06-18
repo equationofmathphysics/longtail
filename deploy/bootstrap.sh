@@ -53,7 +53,7 @@ if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system ]]; then
     SERVICE_STARTED=1
 else
     echo "warning: systemd is not available; start Longtail manually with:" >&2
-    echo "  ${PROJECT_DIR}/.venv/bin/gunicorn --workers 2 --bind 0.0.0.0:51437 nettools.app:app" >&2
+    echo "  set -a; . /etc/longtail/longtail.env; set +a; ${PROJECT_DIR}/.venv/bin/gunicorn --workers 2 --bind \${NET_TOOLS_BIND_HOST}:\${NET_TOOLS_BIND_PORT:-51437} nettools.app:app" >&2
 fi
 
 echo
@@ -62,5 +62,5 @@ if [[ "${SERVICE_STARTED}" -eq 1 ]]; then
 else
     echo "Longtail bootstrap finished, but the web service was not started automatically."
 fi
-echo "Local admin URL: http://127.0.0.1:51437/"
-echo "VPN admin URL:   http://10.66.0.1:51437/"
+echo "VPN admin URL: http://10.66.0.1:51437/"
+echo "SSH tunnel:    ssh -L 51437:10.66.0.1:51437 user@your-server"

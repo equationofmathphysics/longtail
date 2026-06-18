@@ -4,8 +4,8 @@ set -euo pipefail
 SERVICE="${NET_TOOLS_SERVICE:-longtail-web}"
 BIND_PORT="${NET_TOOLS_BIND_PORT:-51437}"
 SERVER_VPN_IP="${NET_TOOLS_SERVER_VPN_IP:-10.66.0.1}"
-URL_LOCAL="http://127.0.0.1:${BIND_PORT}/"
-URL_PHONE="http://${SERVER_VPN_IP}:${BIND_PORT}/"
+URL_VPN="http://${SERVER_VPN_IP}:${BIND_PORT}/"
+URL_TUNNEL="http://127.0.0.1:${BIND_PORT}/"
 
 usage() {
     cat <<EOF
@@ -20,14 +20,14 @@ Commands:
   logs      查看最近日志
 
 WireGuard 用户管理已经迁移到 Web 后台：
-  本机：${URL_LOCAL}
-  手机：${URL_PHONE}
+  WireGuard 内：${URL_VPN}
+  SSH 隧道后：${URL_TUNNEL}
 EOF
 }
 
 case "${1:-url}" in
     url)
-        printf "本机: %s\n手机: %s\n" "$URL_LOCAL" "$URL_PHONE"
+        printf "WireGuard 内: %s\nSSH 隧道后: %s\n" "$URL_VPN" "$URL_TUNNEL"
         ;;
     status)
         systemctl --no-pager --full status "$SERVICE"
