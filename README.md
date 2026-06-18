@@ -33,6 +33,12 @@ sudo install -m 600 deploy/longtail.env.example /etc/longtail/longtail.env
 sudo nano /etc/longtail/longtail.env
 ```
 
+更简单的模板在 `deploy/examples/`，例如：
+
+```bash
+sudo install -m 600 deploy/examples/minimal.env /etc/longtail/longtail.env
+```
+
 至少修改这一行：
 
 ```env
