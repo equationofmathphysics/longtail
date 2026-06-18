@@ -14,7 +14,21 @@ Longtail 是一个很小的 WireGuard Web 管理后台。
 
 ## 前提
 
-服务器已经装好 WireGuard，并且 `/etc/wireguard/wg0.conf` 可以正常工作。
+- 准备服务器 IP 或域名。服务器可以是云服务器、VPS、带公网 IP 的电脑，也可以是当前本机。
+- 远程服务器需要 SSH 登录方式和 root/sudo 权限；本机服务器直接在本机执行命令。
+- 已有可用的 `/etc/wireguard/wg0.conf`，里面有服务端 `PrivateKey`。
+
+## 让 AI 帮你配置
+
+可以把这段发给 AI：
+
+```text
+请帮我安装并配置 Longtail：
+1. 先确认服务器 IP/域名、SSH 登录方式和 root/sudo 权限；如果服务器是本机，就直接本机执行。
+2. 配置完成后，给我手机 WireGuard 二维码，并告诉我后台地址。
+3. 说明 WireGuard 子网、服务器公网入口和开机常态运行方式。
+4. 说明如何使用后台，特别是 WireGuard 可信端口控制。
+```
 
 ## 安装
 
@@ -45,12 +59,26 @@ sudo install -m 600 deploy/examples/minimal.env /etc/longtail/longtail.env
 NET_TOOLS_SERVER_ENDPOINT=YOUR_SERVER_IP_OR_DOMAIN:51820
 ```
 
+最短流程：
+
+1. 复制一个 env 模板到 `/etc/longtail/longtail.env`。
+2. 修改 `NET_TOOLS_SERVER_ENDPOINT`。
+3. 启动 `longtail-web`。
+4. 用 SSH 隧道打开后台。
+5. 在后台新增设备、扫码导入 WireGuard。
+
 启动后台：
 
 ```bash
 sudo cp deploy/longtail-web.service /etc/systemd/system/longtail-web.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now longtail-web
+```
+
+如果 `wg0` 还没有设置开机启动：
+
+```bash
+sudo systemctl enable --now wg-quick@wg0
 ```
 
 查看状态：
@@ -85,12 +113,14 @@ http://127.0.0.1:51437/
 2. 如果希望手机也能管理后台，在设备列表里给 `phone` 点“提权”。
 3. 用 WireGuard App 扫二维码。
 4. 手机连上 VPN 后，打开 `http://10.66.0.1:51437/`。
+5. 如果走 SSH 隧道管理，继续打开 `http://127.0.0.1:51437/`。
 
 端口控制：
 
 - 默认只放行 SSH `tcp/22`、RDP `tcp/3389`/`udp/3389` 和后台 `tcp/51437`。
 - 在“可信端口”里添加额外端口，例如 `tcp/80, tcp/443, udp/53`。
 - 入站表示 WireGuard 设备访问服务器或经服务器转发；出站表示服务器或转发流量访问 WireGuard 设备。
+- 没写进保底端口或可信端口的 WireGuard 侧流量会被丢弃。
 
 ## 可选：限制 SSH
 
