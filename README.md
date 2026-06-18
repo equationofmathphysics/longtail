@@ -122,18 +122,6 @@ http://127.0.0.1:51437/
 - 入站表示 WireGuard 设备访问服务器或经服务器转发；出站表示服务器或转发流量访问 WireGuard 设备。
 - 没写进保底端口或可信端口的 WireGuard 侧流量会被丢弃。
 
-## 可选：限制 SSH
-
-如果想让 SSH 只允许 WireGuard 网段访问：
-
-```bash
-sudo cp deploy/longtail-ssh-firewall.service /etc/systemd/system/longtail-ssh-firewall.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now longtail-ssh-firewall
-```
-
-默认允许 `10.66.0.0/24` 访问 SSH，公网 SSH 会被丢弃。
-
 ## 常用配置
 
 配置文件在：
