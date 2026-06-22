@@ -3,6 +3,7 @@ data/
 *.conf
 *.svg
 *.png
+!docs/longtail-dashboard.png
 *.key
 *.pub
 *.bak.*
