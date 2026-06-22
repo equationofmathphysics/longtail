@@ -161,7 +161,7 @@ def get_config(name: str):
 def download_config(name: str):
     path = manager.client_path(name)
     if not path.exists():
-        raise WireGuardError(f"找不到客户端配置: {name}")
+        raise WireGuardError(f"Client config not found: {name}")
     return send_file(path, as_attachment=True, download_name=f"{name}.conf", mimetype="text/plain")
 
 

@@ -56,19 +56,19 @@ function fmtBytes(value) {
 }
 
 function fmtHandshake(ts) {
-  if (!ts) return "从未连接";
+  if (!ts) return "never connected";
   const seconds = Math.max(0, Math.round(Date.now() / 1000 - ts));
-  if (seconds < 60) return `${seconds}s 前`;
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m 前`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)}h 前`;
-  return `${Math.round(seconds / 86400)}d 前`;
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)}h ago`;
+  return `${Math.round(seconds / 86400)}d ago`;
 }
 
 function renderPeers(peers) {
-  peerCountEl.textContent = `${peers.length} 台`;
+  peerCountEl.textContent = `${peers.length} devices`;
   peersEl.innerHTML = "";
   if (!peers.length) {
-    peersEl.innerHTML = `<p class="muted">暂无设备</p>`;
+    peersEl.innerHTML = `<p class="muted">No devices yet</p>`;
     return;
   }
 
@@ -85,10 +85,10 @@ function renderPeers(peers) {
         ${peer.is_admin ? '<span class="badge admin">admin</span>' : ""}
       </div>
       <div class="actions">
-        <button data-action="config" data-name="${peer.name}" ${peer.has_config ? "" : "disabled"}>${peer.has_config ? "配置" : "无配置"}</button>
-        <button data-action="admin" data-name="${peer.name}" data-admin="${peer.is_admin ? "0" : "1"}">${peer.is_admin ? "降权" : "提权"}</button>
-        <button data-action="${peer.enabled ? "pause" : "resume"}" data-name="${peer.name}">${peer.enabled ? "暂停" : "恢复"}</button>
-        <button class="danger" data-action="remove" data-name="${peer.name}">删除</button>
+        <button data-action="config" data-name="${peer.name}" ${peer.has_config ? "" : "disabled"}>${peer.has_config ? "Config" : "No Config"}</button>
+        <button data-action="admin" data-name="${peer.name}" data-admin="${peer.is_admin ? "0" : "1"}">${peer.is_admin ? "Remove Admin" : "Make Admin"}</button>
+        <button data-action="${peer.enabled ? "pause" : "resume"}" data-name="${peer.name}">${peer.enabled ? "Pause" : "Resume"}</button>
+        <button class="danger" data-action="remove" data-name="${peer.name}">Delete</button>
       </div>
       <div class="traffic">${fmtBytes(peer.rx_bytes)} recv · ${fmtBytes(peer.tx_bytes)} sent</div>
     `;
@@ -98,10 +98,10 @@ function renderPeers(peers) {
 
 function renderFirewall(policy) {
   if (!policy) return;
-  requiredInboundPortsEl.textContent = policy.required_inbound_ports || "无";
-  requiredOutboundPortsEl.textContent = policy.required_outbound_ports || "无";
-  effectiveInboundPortsEl.textContent = policy.effective_inbound_ports || "无";
-  effectiveOutboundPortsEl.textContent = policy.effective_outbound_ports || "无";
+  requiredInboundPortsEl.textContent = policy.required_inbound_ports || "None";
+  requiredOutboundPortsEl.textContent = policy.required_outbound_ports || "None";
+  effectiveInboundPortsEl.textContent = policy.effective_inbound_ports || "None";
+  effectiveOutboundPortsEl.textContent = policy.effective_outbound_ports || "None";
   firewallForm.elements.trusted_inbound_ports.value = policy.trusted_inbound_ports || "";
   firewallForm.elements.trusted_outbound_ports.value = policy.trusted_outbound_ports || "";
 }
@@ -115,8 +115,8 @@ async function refresh() {
     diagnosticsEl.hidden = true;
     diagnosticsEl.innerHTML = "";
   }
-  nextIpEl.textContent = data.next_ip || "自动分配";
-  nextIpMetricEl.textContent = data.next_ip || "自动分配";
+  nextIpEl.textContent = data.next_ip || "Auto";
+  nextIpMetricEl.textContent = data.next_ip || "Auto";
   ifaceNameEl.textContent = data.iface || "wg0";
   renderFirewall(data.firewall);
   renderPeers(data.peers);
@@ -139,7 +139,7 @@ addForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(addForm);
   const name = String(form.get("name") || "").trim();
-  if (!confirmAction(`添加设备 ${name} 并生成 WireGuard 配置？`)) return;
+  if (!confirmAction(`Add ${name} and generate a WireGuard config?`)) return;
   try {
     const data = await api("/api/peers", {
       method: "POST",
@@ -158,7 +158,7 @@ addForm.addEventListener("submit", async (event) => {
 firewallForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(firewallForm);
-  if (!confirmAction("保存可信端口并立即应用服务端防火墙规则？")) return;
+  if (!confirmAction("Save trusted ports and apply the server firewall rules now?")) return;
   try {
     const data = await api("/api/firewall", {
       method: "POST",
@@ -168,7 +168,7 @@ firewallForm.addEventListener("submit", async (event) => {
       }),
     });
     renderFirewall(data.policy);
-    toast("端口策略已保存");
+    toast("Port policy saved");
   } catch (error) {
     toast(error.message);
   }
@@ -180,26 +180,26 @@ peersEl.addEventListener("click", async (event) => {
   const { action, name } = button.dataset;
   try {
     if (action === "config") {
-      if (!confirmAction(`打开 ${name} 的配置和二维码？`)) return;
+      if (!confirmAction(`Open the config and QR code for ${name}?`)) return;
       await openConfig(name);
     } else if (action === "pause") {
-      if (!confirmAction(`暂停 ${name}？该设备会立即断开 WireGuard 访问。`)) return;
+      if (!confirmAction(`Pause ${name}? This device will immediately lose WireGuard access.`)) return;
       await api(`/api/peers/${encodeURIComponent(name)}/pause`, { method: "POST" });
       await refresh();
     } else if (action === "resume") {
-      if (!confirmAction(`恢复 ${name} 的 WireGuard 访问？`)) return;
+      if (!confirmAction(`Restore WireGuard access for ${name}?`)) return;
       await api(`/api/peers/${encodeURIComponent(name)}/resume`, { method: "POST" });
       await refresh();
     } else if (action === "admin") {
       const willPromote = button.dataset.admin === "1";
-      if (!confirmAction(`${willPromote ? "提权" : "降权"} ${name}？${willPromote ? "该设备将可以访问后台。" : "该设备将不能再访问后台。"}`)) return;
+      if (!confirmAction(`${willPromote ? "Grant admin access to" : "Remove admin access from"} ${name}?`)) return;
       await api(`/api/peers/${encodeURIComponent(name)}/admin`, {
         method: "POST",
         body: JSON.stringify({ is_admin: willPromote }),
       });
       await refresh();
     } else if (action === "remove") {
-      if (!confirmAction(`永久删除 ${name}？配置文件和 WireGuard peer 都会被移除。`)) return;
+      if (!confirmAction(`Permanently delete ${name}? Its config file and WireGuard peer will be removed.`)) return;
       await api(`/api/peers/${encodeURIComponent(name)}`, { method: "DELETE" });
       await refresh();
     }
@@ -210,7 +210,7 @@ peersEl.addEventListener("click", async (event) => {
 
 copyConfig.addEventListener("click", async () => {
   await navigator.clipboard.writeText(configText.value);
-  toast("已复制配置");
+  toast("Config copied");
 });
 
 closeDialog.addEventListener("click", () => dialog.close());

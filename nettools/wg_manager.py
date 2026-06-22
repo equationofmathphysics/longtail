@@ -96,7 +96,7 @@ class WireGuardManager:
     def set_peer_admin(self, name: str, is_admin: bool) -> None:
         self._validate_name(name)
         if not self._find_peer(name, include_disabled=True):
-            raise WireGuardError(f"用户不存在: {name}")
+            raise WireGuardError(f"Peer not found: {name}")
         with self.locked():
             state = self._read_state()
             names = set(state.get("admin_peers", []))
@@ -187,10 +187,10 @@ class WireGuardManager:
                     continue
                 if wg_network.overlaps(network):
                     warnings.append(
-                        f"WireGuard 网段 {wg_network} 与 {dev} 路由 {network} 重叠，访问部分 10.x 地址可能冲突。"
+                        f"WireGuard network {wg_network} overlaps with route {network} on {dev}. Some 10.x addresses may conflict."
                     )
         except Exception as exc:
-            warnings.append(f"路由诊断失败: {exc}")
+            warnings.append(f"Route diagnostics failed: {exc}")
         return warnings
 
     def add_peer(self, name: str, allowed_ips: str | None = None) -> dict[str, str]:
@@ -199,7 +199,7 @@ class WireGuardManager:
         self._validate_allowed_ips(allowed_ips)
         with self.locked():
             if self._find_peer(name):
-                raise WireGuardError(f"用户已存在: {name}")
+                raise WireGuardError(f"Peer already exists: {name}")
             ip = self._next_ip()
             private_key = self._run(["wg", "genkey"]).strip()
             public_key = self._run(["wg", "pubkey"], input_text=private_key + "\n").strip()
@@ -220,7 +220,7 @@ class WireGuardManager:
         with self.locked():
             peer = self._find_peer(name)
             if not peer or not peer.enabled:
-                raise WireGuardError(f"用户不存在或已暂停: {name}")
+                raise WireGuardError(f"Peer not found or already paused: {name}")
             text = self.settings.wg_conf.read_text(encoding="utf-8")
             block = self._peer_block_pattern(name, disabled=False)
             text = block.sub(lambda m: self._disable_block(name, m.group(0)), text, count=1)
@@ -233,7 +233,7 @@ class WireGuardManager:
         with self.locked():
             peer = self._find_peer(name, include_disabled=True)
             if not peer or peer.enabled:
-                raise WireGuardError(f"用户不存在或未暂停: {name}")
+                raise WireGuardError(f"Peer not found or not paused: {name}")
             text = self.settings.wg_conf.read_text(encoding="utf-8")
             block = self._peer_block_pattern(name, disabled=True)
             text = block.sub(lambda m: self._enable_block(m.group(0)), text, count=1)
@@ -246,7 +246,7 @@ class WireGuardManager:
         with self.locked():
             peer = self._find_peer(name, include_disabled=True)
             if not peer:
-                raise WireGuardError(f"用户不存在: {name}")
+                raise WireGuardError(f"Peer not found: {name}")
             text = self.settings.wg_conf.read_text(encoding="utf-8")
             text = self._peer_block_pattern(name, disabled=not peer.enabled).sub("", text, count=1)
             self._backup_config()
@@ -263,7 +263,7 @@ class WireGuardManager:
         self._validate_name(name)
         path = self.client_path(name)
         if not path.exists():
-            raise WireGuardError(f"找不到客户端配置: {name}")
+            raise WireGuardError(f"Client config not found: {name}")
         return path.read_text(encoding="utf-8")
 
     def has_client_config(self, name: str) -> bool:
@@ -289,7 +289,7 @@ class WireGuardManager:
             check=False,
         )
         if result.returncode != 0:
-            detail = result.stderr.decode("utf-8", errors="replace").strip() or "QR 生成失败"
+            detail = result.stderr.decode("utf-8", errors="replace").strip() or "QR generation failed"
             raise WireGuardError(detail)
         return result.stdout
 
@@ -300,7 +300,7 @@ class WireGuardManager:
                 private_key = line.split("=", 1)[1].strip()
                 break
         if not private_key:
-            raise WireGuardError("服务端 PrivateKey 不存在")
+            raise WireGuardError("Server PrivateKey is missing")
         return self._run(["wg", "pubkey"], input_text=private_key + "\n").strip()
 
     def client_path(self, name: str) -> Path:
@@ -308,7 +308,7 @@ class WireGuardManager:
 
     def _parse_config(self) -> list[Peer]:
         if not self.settings.wg_conf.exists():
-            raise WireGuardError(f"WireGuard 配置不存在: {self.settings.wg_conf}")
+            raise WireGuardError(f"WireGuard config does not exist: {self.settings.wg_conf}")
         peers: list[Peer] = []
         current_name: str | None = None
         enabled = True
@@ -372,7 +372,7 @@ class WireGuardManager:
         for last_octet in range(2, 255):
             if last_octet not in used:
                 return f"{self.settings.wg_subnet}.{last_octet}"
-        raise WireGuardError("没有可用的 WireGuard IP")
+        raise WireGuardError("No available WireGuard IP")
 
     def _client_config(self, private_key: str, ip: str, server_public_key: str, allowed_ips: str) -> str:
         endpoint = self._server_endpoint()
@@ -393,7 +393,7 @@ class WireGuardManager:
             return self.settings.server_endpoint
         if self.settings.server_public_ip:
             return f"{self.settings.server_public_ip}:{self.settings.wg_port}"
-        raise WireGuardError("请设置 NET_TOOLS_SERVER_ENDPOINT，例如 vpn.example.com:51820")
+        raise WireGuardError("Please set NET_TOOLS_SERVER_ENDPOINT, for example vpn.example.com:51820")
 
     def reload(self) -> None:
         command = f"wg syncconf {self.settings.wg_iface} <(wg-quick strip {self.settings.wg_iface})"
@@ -431,7 +431,7 @@ class WireGuardManager:
         try:
             return json.loads(self.settings.state_file.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
-            raise WireGuardError(f"状态文件损坏: {self.settings.state_file}") from exc
+            raise WireGuardError(f"State file is invalid: {self.settings.state_file}") from exc
 
     def _write_state(self, state: dict) -> None:
         self.settings.state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -507,15 +507,15 @@ class WireGuardManager:
                 continue
             match = PORT_RE.fullmatch(raw)
             if not match:
-                raise WireGuardError(f"端口规则不合法: {raw}")
+                raise WireGuardError(f"Invalid port rule: {raw}")
             prefix_proto, start_text, end_text, suffix_proto = match.groups()
             if prefix_proto and suffix_proto and prefix_proto.lower() != suffix_proto.lower():
-                raise WireGuardError(f"端口协议冲突: {raw}")
+                raise WireGuardError(f"Conflicting port protocol: {raw}")
             protocol = (prefix_proto or suffix_proto or "tcp").lower()
             start = int(start_text)
             end = int(end_text or start_text)
             if not (1 <= start <= 65535 and 1 <= end <= 65535 and start <= end):
-                raise WireGuardError(f"端口范围不合法: {raw}")
+                raise WireGuardError(f"Invalid port range: {raw}")
             rule = PortRule(protocol, start, end)
             if rule not in rules:
                 rules.append(rule)
@@ -539,14 +539,14 @@ class WireGuardManager:
 
     def _validate_name(self, name: str) -> None:
         if not NAME_RE.fullmatch(name):
-            raise WireGuardError("用户名只能包含 1-32 位字母、数字、下划线、点和短横线")
+            raise WireGuardError("Name must be 1-32 characters and may only contain letters, numbers, underscores, dots, and hyphens")
 
     def _validate_allowed_ips(self, allowed_ips: str) -> None:
         try:
             for part in allowed_ips.split(","):
                 ipaddress.ip_network(part.strip(), strict=False)
         except ValueError as exc:
-            raise WireGuardError(f"AllowedIPs 不合法: {allowed_ips}") from exc
+            raise WireGuardError(f"Invalid AllowedIPs: {allowed_ips}") from exc
 
     def _is_peer_ip(self, value: str) -> bool:
         try:

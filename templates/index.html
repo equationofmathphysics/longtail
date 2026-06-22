@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,82 +13,82 @@
         <div class="brand-mark">LT</div>
         <div>
           <h1>Longtail</h1>
-          <p>管理地址 {{ server_vpn_ip }} · 管理员 {{ admin_ips }}</p>
+          <p>Admin URL {{ server_vpn_ip }} · Admins {{ admin_ips }}</p>
         </div>
       </div>
-      <button id="refreshBtn" class="icon-btn" title="刷新">↻</button>
+      <button id="refreshBtn" class="icon-btn" title="Refresh">↻</button>
     </header>
 
     <section id="diagnostics" class="diagnostics" hidden></section>
 
     <section class="status-grid">
       <div class="metric">
-        <span>接口</span>
+        <span>Interface</span>
         <strong id="ifaceName">wg0</strong>
       </div>
       <div class="metric">
-        <span>后台</span>
+        <span>Admin</span>
         <strong>{{ server_vpn_ip }}:{{ bind_port }}</strong>
       </div>
       <div class="metric">
-        <span>下一地址</span>
-        <strong id="nextIpMetric">自动分配</strong>
+        <span>Next IP</span>
+        <strong id="nextIpMetric">Auto</strong>
       </div>
     </section>
 
     <section class="panel">
       <div class="panel-head">
-        <h2>新增设备</h2>
+        <h2>Add Device</h2>
       </div>
       <form id="addForm" class="form-grid add-device-grid">
         <label>
-          <span>设备名</span>
+          <span>Device Name</span>
           <input name="name" autocomplete="off" placeholder="pc / orangepi / server" pattern="[A-Za-z0-9_.-]{1,32}" required>
         </label>
         <div class="readonly-field">
           <span>VPN IP</span>
-          <strong id="nextIp">自动分配</strong>
+          <strong id="nextIp">Auto</strong>
         </div>
-        <button type="submit">添加并生成配置</button>
+        <button type="submit">Add and Generate Config</button>
       </form>
     </section>
 
     <section class="panel">
       <div class="panel-head">
-        <h2>可信端口</h2>
+        <h2>Trusted Ports</h2>
       </div>
       <form id="firewallForm" class="firewall-form">
         <div class="firewall-summary">
           <div class="readonly-field">
-            <span>保底入站</span>
-            <strong id="requiredInboundPorts">加载中</strong>
+            <span>Required Inbound</span>
+            <strong id="requiredInboundPorts">Loading</strong>
           </div>
           <div class="readonly-field">
-            <span>保底出站</span>
-            <strong id="requiredOutboundPorts">加载中</strong>
+            <span>Required Outbound</span>
+            <strong id="requiredOutboundPorts">Loading</strong>
           </div>
         </div>
         <div class="form-grid firewall-grid">
           <label>
-            <span>额外入站</span>
+            <span>Extra Inbound</span>
             <input name="trusted_inbound_ports" autocomplete="off" placeholder="tcp/80, tcp/443, udp/53">
           </label>
           <label>
-            <span>额外出站</span>
+            <span>Extra Outbound</span>
             <input name="trusted_outbound_ports" autocomplete="off" placeholder="tcp/22, tcp/3389, udp/3389">
           </label>
-          <button type="submit">保存端口</button>
+          <button type="submit">Save Ports</button>
         </div>
         <div class="effective-ports">
-          <span>当前入站 <strong id="effectiveInboundPorts">加载中</strong></span>
-          <span>当前出站 <strong id="effectiveOutboundPorts">加载中</strong></span>
+          <span>Current inbound <strong id="effectiveInboundPorts">Loading</strong></span>
+          <span>Current outbound <strong id="effectiveOutboundPorts">Loading</strong></span>
         </div>
       </form>
     </section>
 
     <section class="panel">
       <div class="panel-head">
-        <h2>设备</h2>
+        <h2>Devices</h2>
         <span id="peerCount" class="muted">0</span>
       </div>
       <div id="peers" class="peer-list"></div>
@@ -97,15 +97,15 @@
 
   <dialog id="configDialog">
     <div class="dialog-head">
-      <h2 id="dialogTitle">配置</h2>
-      <button id="closeDialog" class="icon-btn" title="关闭">×</button>
+      <h2 id="dialogTitle">Config</h2>
+      <button id="closeDialog" class="icon-btn" title="Close">×</button>
     </div>
     <div class="qr-wrap">
       <img id="qrImage" alt="WireGuard QR">
     </div>
     <div class="copy-row">
-      <button id="copyConfig">复制配置</button>
-      <a id="downloadConfig" class="button-link" href="#" download>下载</a>
+      <button id="copyConfig">Copy Config</button>
+      <a id="downloadConfig" class="button-link" href="#" download>Download</a>
     </div>
     <textarea id="configText" spellcheck="false"></textarea>
   </dialog>
